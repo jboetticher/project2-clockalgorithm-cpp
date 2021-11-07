@@ -38,10 +38,13 @@ BufMgr::BufMgr(std::uint32_t bufs)
   clockHand = bufs - 1;
 }
 
+// jeremy
 void BufMgr::advanceClock() {}
 
+// jeremy
 void BufMgr::allocBuf(FrameId& frame) {}
 
+// jeremy
 void BufMgr::readPage(File& file, const PageId pageNo, Page*& page) {}
 
 void BufMgr::unPinPage(File& file, const PageId pageNo, const bool dirty) {}
