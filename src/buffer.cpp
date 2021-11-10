@@ -38,14 +38,58 @@ BufMgr::BufMgr(std::uint32_t bufs)
   clockHand = bufs - 1;
 }
 
-// jeremy
-void BufMgr::advanceClock() {}
+/**
+ * Advance clock to next frame in the buffer pool.
+ */
+void BufMgr::advanceClock() {
+  if(clockHand + 1 >= numBufs) {
+    clockHand = 0;
+  }
+  else {
+    clockhand++;
+  }
+}
+
+/**
+ * Allocates a free frame using the clock algorithm; if necessary, writing 
+ * a dirty page back to disk. Throws BufferExceededException if all buffer 
+ * frames are pinned. This private method will get called by the readPage()
+ * and allocPage() methods described below. Make sure that if the buffer
+ * frame allocated has a valid page in it, you remove the appropriate entry
+ * from the hash table.
+ */
+void BufMgr::allocBuf(FrameId& frame) {
+  // store current frame so that we can check if it repeats itself
+  FrameId curFrame = clockHand;
+
+  // clock algorithm until it gets to the clock hand
+  advanceClock();
+  bool allocated = false;
+  while(!allocated && curFrame != clockHand) {
+    // if the refbit is 1, advance the clock
+    if(bufDescTable[clockHand].refbit) {
+      advanceClock();
+    }
+    // else, frameid is set to that frame. set allocated to true.
+    else {
+      frame = bufDescTable[clockHand].frameNo;
+
+      // TODO:  if frame is dirty, write to disk. 
+      //        Otherwise, clear frame + new page is read into location
+
+      allocated = true;
+    }
+  }
+
+  if(!allocated) {
+    throw new BufferExceededException();
+  }
+}
 
 // jeremy
-void BufMgr::allocBuf(FrameId& frame) {}
+void BufMgr::readPage(File& file, const PageId pageNo, Page*& page) {
 
-// jeremy
-void BufMgr::readPage(File& file, const PageId pageNo, Page*& page) {}
+}
 
 void BufMgr::unPinPage(File& file, const PageId pageNo, const bool dirty) {}
 
