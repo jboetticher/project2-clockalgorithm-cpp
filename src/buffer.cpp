@@ -76,6 +76,14 @@ void BufMgr::allocBuf(FrameId& frame) {
 
       // TODO:  if frame is dirty, write to disk. 
       //        Otherwise, clear frame + new page is read into location
+      if(bufDescTable[clockHand].dirty) {
+        // TODO: write to disk
+      }
+      else {
+        bufDescTable[clockHand].clear();
+      }
+
+      // TODO: new page is read into location?
 
       allocated = true;
     }
