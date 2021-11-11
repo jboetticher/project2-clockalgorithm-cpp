@@ -17,6 +17,9 @@
 #include "exceptions/page_not_pinned_exception.h"
 #include "exceptions/page_pinned_exception.h"
 
+#include "bufHashTbl.h"
+#include "file_iterator.h"
+
 namespace badgerdb {
 
 constexpr int HASHTABLE_SZ(int bufs) { return ((int)(bufs * 1.2) & -2) + 1; }
@@ -44,13 +47,75 @@ void BufMgr::allocBuf(FrameId& frame) {}
 
 void BufMgr::readPage(File& file, const PageId pageNo, Page*& page) {}
 
-void BufMgr::unPinPage(File& file, const PageId pageNo, const bool dirty) {}
+void BufMgr::unPinPage(File& file, const PageId pageNo, const bool dirty) {
+  FrameId fid;
+  try {
+    hashTable.lookup(file, pageNo, fid);
+  } catch (HashNotFoundException e) {
+    std::cerr << e.message();
+    return;
+  }
+  if (bufDescTable[fid].pinCnt != 0) {
+    bufDescTable[fid].pinCnt -= 1;
+    if (dirty) {
+      bufDescTable[fid].dirty = true;
+    }
+  } else {
+    throw PageNotPinnedException(file.filename(), pageNo, fid);
+  }
+}
 
-void BufMgr::allocPage(File& file, PageId& pageNo, Page*& page) {}
+void BufMgr::allocPage(File& file, PageId& pageNo, Page*& page) {
+  page = &file.allocatePage(); // TODO : may not need & here
+  pageNo = (*page).page_number(); // TODO : check pointer syntax
+  FrameId fid;
+  allocBuf(fid);
+  hashTable.insert(file, pageNo, fid);
+  bufDescTable[fid].Set(file, pageNo);
+  // TODO : do anything with bufPool ?
+}
 
-void BufMgr::flushFile(File& file) {}
+void BufMgr::flushFile(File& file) {
+  // TODO : need to check if pages are valid ?
+  // I did this function backwards, by iterating through every
+  // page in the file, then checking if that page was in the buffer
+  // pool. Not sure what implications this has (i.e. running time)
+  FileIterator fi = file.begin();
+  FileIterator end = file.end();
+  while (fi != end) {
+    FrameId fid;
+    PageId pageNo = (*fi).page_number();
+    try {
+      hashTable.lookup(file, pageNo, fid);
+    } catch (HashNotFoundException e) {
+      fi++;
+      continue;
+    }
+    if (bufDescTable[fid].dirty) {
+      file.writePage(pageNo, bufPool[fid]); // perform checks mentioned in method header ?
+      bufDescTable[fid].dirty = false;
+    }
+    hashTable.remove(file, pageNo);
+    bufDescTable[fid].clear();
 
-void BufMgr::disposePage(File& file, const PageId PageNo) {}
+  }
+}
+
+void BufMgr::disposePage(File& file, const PageId PageNo) {
+  // TODO : need to check if pinned ?
+  FrameId fid;
+  bool frameAllocated = true;
+  try {
+    hashTable.lookup(file, PageNo, fid);
+  } catch (HashNotFoundException e) {
+    frameAllocated = false;
+  }
+  if (frameAllocated) {
+    bufDescTable[fid].clear();
+    hashTable.remove(file, PageNo);
+  }
+  file.deletePage(PageNo);
+}
 
 void BufMgr::printSelf(void) {
   int validFrames = 0;
