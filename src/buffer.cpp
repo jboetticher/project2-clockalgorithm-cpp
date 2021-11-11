@@ -69,25 +69,30 @@ void BufMgr::allocBuf(FrameId& frame) {
   advanceClock();
   bool allocated = false;
   while(!allocated && curFrame != clockHand) {
-    // if the refbit is 1, advance the clock
+    // if the refbit is 1, reset it & advance the clock
     if(bufDescTable[clockHand].refbit) {
+      bufDescTable[clockHand].refbit = false;
+      advanceClock();
+    }
+    // if it's being used, skip it.
+    else if(bufDescTable[clockHand].pinCnt > 0) {
       advanceClock();
     }
     // else, frameid is set to that frame. set allocated to true.
     else {
       frame = bufDescTable[clockHand].frameNo;
 
-      // TODO:  if frame is dirty, write to disk. 
-      //        Otherwise, clear frame + new page is read into location
+      // if frame is dirty, write to disk. 
       if(bufDescTable[clockHand].dirty) {
-        // TODO: write to disk
-      }
-      else {
-        bufDescTable[clockHand].clear();
+        // NOTE:  algorithm says to flush, not sure if calling this is right.
+        //        also not sure if I used pointers correctly.
+        flushFile(&bufDescTable[clockHand].file);
       }
 
-      // TODO: new page is read into location?
-
+      // clear + set frame + end
+      // NOTE:    not sure if clearing is necessary
+      bufDescTable[clockHand].clear();
+      frame = bufDescTable[clockHand].frameNo;
       allocated = true;
     }
   }
@@ -99,7 +104,8 @@ void BufMgr::allocBuf(FrameId& frame) {
 
 // jeremy
 void BufMgr::readPage(File& file, const PageId pageNo, Page*& page) {
-
+  // each time a page in the buffer pool is accessed via readPage, the refbit of the
+  // frame is set to true.
 }
 
 void BufMgr::unPinPage(File& file, const PageId pageNo, const bool dirty) {
