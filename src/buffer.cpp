@@ -119,7 +119,7 @@ namespace badgerdb
   void BufMgr::readPage(File &file, const PageId pageNo, Page *&page)
   {
     // check if the page is already in the buffer pool via lookup method
-    FrameId* f;
+    FrameId f;
 
     try
     {
