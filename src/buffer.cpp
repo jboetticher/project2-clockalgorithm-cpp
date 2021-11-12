@@ -183,7 +183,7 @@ namespace badgerdb
 
   void BufMgr::allocPage(File &file, PageId &pageNo, Page *&page)
   {
-    page = &file.allocatePage();    // TODO : may not need & here
+    page = file.allocatePage();    // TODO : may not need & here
     pageNo = (*page).page_number(); // TODO : check pointer syntax
     FrameId fid;
     allocBuf(fid);
