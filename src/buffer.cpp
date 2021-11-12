@@ -133,7 +133,7 @@ namespace badgerdb
       bufDescTable[f].pinCnt += 1;
 
       // return a pointer to the frame containing the page via page parameter
-      return f;
+      return *bufPool[f];
     }
     // page is not in the buffer pool:
     catch (HashNotFoundException e)
@@ -151,7 +151,7 @@ namespace badgerdb
       bufDescTable[f].Set(file, pageNo);
 
       // return pointer to frame containing the page via page parameter
-      return f;
+      *page = pg;
     }
   }
 
@@ -184,6 +184,7 @@ namespace badgerdb
   void BufMgr::allocPage(File &file, PageId &pageNo, Page *&page)
   {
     *page = file.allocatePage();    // TODO : may not need & here
+                                    // added a star here, removed an error? 
     pageNo = (*page).page_number(); // TODO : check pointer syntax
     FrameId fid;
     allocBuf(fid);
