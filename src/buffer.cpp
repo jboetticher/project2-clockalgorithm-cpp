@@ -111,7 +111,7 @@ namespace badgerdb
 
         // TODO:    if the buffer frame allocated has a valid page in it, 
         //          remove the appropriate entry from the hash table.
-        hashTable.remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
+        //hashTable.remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
 
         // clear + set frame + end
         // NOTE:    not sure if clearing is necessary
