@@ -98,7 +98,7 @@ namespace badgerdb
         {
           // NOTE:  algorithm says to flush, not sure if calling this is right.
           //        also not sure if I used pointers correctly.
-          flushFile(&bufDescTable[clockHand].file);
+          flushFile(bufDescTable[clockHand].file);
         }
 
         // clear + set frame + end
@@ -133,7 +133,7 @@ namespace badgerdb
       bufDescTable[f].pinCnt += 1;
 
       // return a pointer to the frame containing the page via page parameter
-      return *bufPool[f];
+      *page = bufPool[f];
     }
     // page is not in the buffer pool:
     catch (HashNotFoundException e)
