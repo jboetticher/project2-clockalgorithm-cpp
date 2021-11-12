@@ -55,7 +55,7 @@ namespace badgerdb
     }
     else
     {
-      clockhand++;
+      clockHand++;
     }
   }
 
@@ -136,7 +136,7 @@ namespace badgerdb
       return f;
     }
     // page is not in the buffer pool:
-    catch
+    catch (HashNotFoundException e)
     {
       // call allocBuf
       allocBuf(f);
