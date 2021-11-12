@@ -95,6 +95,7 @@ int main() {
 
   // Delete the file since we're done with it.
   File::remove(filename);
+  std::cout << "File was removed. \n";
 
   // This function tests buffer manager, comment this line if you don't wish to
   // test buffer manager
@@ -104,6 +105,7 @@ int main() {
 void testBufMgr() {
   // Create buffer manager
   bufMgr = std::make_shared<BufMgr>(num);
+  std::cout << "Buffer Manager was created. \n";
 
   // Create dummy files
   const std::string filename1 = "test.1";
@@ -123,11 +125,13 @@ void testBufMgr() {
   }
 
   {
+    std::cout << "Creating files... \n";
     File file1 = File::create(filename1);
     File file2 = File::create(filename2);
     File file3 = File::create(filename3);
     File file4 = File::create(filename4);
     File file5 = File::create(filename5);
+    std::cout << "5 Files were created. \n";
 
     // Test buffer manager
     // Comment tests which you do not wish to run now. Tests are dependent on
@@ -158,14 +162,20 @@ void testBufMgr() {
 
 void test1(File &file1) {
   // Allocating pages in a file...
+  std::cout << "Test 1: allocating pages in a file. \n";
   for (i = 0; i < num; i++) {
     bufMgr->allocPage(file1, pid[i], page);
+    std::cout << "    Allocating page finished. \n";
     sprintf(tmpbuf, "test.1 Page %u %7.1f", pid[i], (float)pid[i]);
+    std::cout << "    sprintf finished. \n";
     rid[i] = page->insertRecord(tmpbuf);
+    std::cout << "    Inserting record finished. \n";
     bufMgr->unPinPage(file1, pid[i], true);
+    std::cout << "    Page unpinning finished. \n";
   }
 
   // Reading pages back...
+  std::cout << "Test 1: reading pages back. \n";
   for (i = 0; i < num; i++) {
     bufMgr->readPage(file1, pid[i], page);
     sprintf(tmpbuf, "test.1 Page %u %7.1f", pid[i], (float)pid[i]);

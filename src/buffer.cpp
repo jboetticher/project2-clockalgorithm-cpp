@@ -69,11 +69,14 @@ namespace badgerdb
  */
   void BufMgr::allocBuf(FrameId &frame)
   {
+    std::cout << "        BufMgr: Starting allocBuf! \n";
     // store current frame so that we can check if it repeats itself
     FrameId curFrame = clockHand;
 
     // clock algorithm until it gets to the clock hand
     advanceClock();
+    std::cout << "        BufMgr: Advanced the clock to " << clockHand << ".\n";
+
     bool allocated = false;
     while (!allocated && curFrame != clockHand)
     {
@@ -82,20 +85,25 @@ namespace badgerdb
       {
         bufDescTable[clockHand].refbit = false;
         advanceClock();
+        std::cout << "        BufMgr: Refbit was 1, so it was reset and the clock was advanced to " << clockHand << ".\n";
       }
       // if it's being used, skip it.
       else if (bufDescTable[clockHand].pinCnt > 0)
       {
         advanceClock();
+        std::cout << "        BufMgr: PinCnt > 0, clock advanced to " << clockHand << ".\n";
       }
       // else, frameid is set to that frame. set allocated to true.
       else
       {
         frame = bufDescTable[clockHand].frameNo;
+        std::cout << "        BufMgr: FrameId set to " << frame << ".\n";
 
         // if frame is dirty, write to disk.
         if (bufDescTable[clockHand].dirty)
         {
+          std::cout << "        BufMgr: Frame was dirty, starting to flush.\n";
+
           // NOTE:  algorithm says to flush, not sure if calling this is right.
           //        also not sure if I used pointers correctly.
           flushFile(bufDescTable[clockHand].file);
@@ -103,8 +111,9 @@ namespace badgerdb
 
         // clear + set frame + end
         // NOTE:    not sure if clearing is necessary
+        std::cout << "        BufMgr: Starting to clear frame.\n";
         bufDescTable[clockHand].clear();
-        frame = bufDescTable[clockHand].frameNo;
+        bufDescTable[clockHand].Print();
         allocated = true;
       }
     }
@@ -181,15 +190,26 @@ namespace badgerdb
     }
   }
 
-  void BufMgr::allocPage(File &file, PageId &pageNo, Page *&page)
+  void BufMgr::allocPage(File &file, PageId &pageNo, Page* &page)
   {
-    *page = file.allocatePage();    // TODO : may not need & here
+    std::cout << "        BufMgr: Starting allocPage! \n";
+    Page p = file.allocatePage();
+    std::cout << "        BufMgr: file.allocatePage() \n";
+    page = &(p);    // TODO : may not need & here
                                     // added a star here, removed an error? 
+
+    std::cout << "        BufMgr: set Page* &page to newly allocated page \n";
     pageNo = (*page).page_number(); // TODO : check pointer syntax
+    std::cout << "        BufMgr: pageNo set to " << pageNo << "\n";
     FrameId fid;
     allocBuf(fid);
+    std::cout << "        BufMgr: allocBuf(fid) \n";
     hashTable.insert(file, pageNo, fid);
+    bufDescTable[clockHand].Print();
+    std::cout << "        BufMgr: inserted to hash table \n";
     bufDescTable[fid].Set(file, pageNo);
+    bufDescTable[clockHand].Print();
+    std::cout << "        BufMgr: set within bufDescTable \n";
     // TODO : do anything with bufPool ?
   }
 
