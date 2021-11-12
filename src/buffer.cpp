@@ -109,6 +109,10 @@ namespace badgerdb
           flushFile(bufDescTable[clockHand].file);
         }
 
+        // TODO:    if the buffer frame allocated has a valid page in it, 
+        //          remove the appropriate entry from the hash table.
+        hashTable.remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
+
         // clear + set frame + end
         // NOTE:    not sure if clearing is necessary
         std::cout << "        BufMgr: Starting to clear frame.\n";
@@ -210,7 +214,8 @@ namespace badgerdb
     bufDescTable[fid].Set(file, pageNo);
     bufDescTable[clockHand].Print();
     std::cout << "        BufMgr: set within bufDescTable \n";
-    // TODO : do anything with bufPool ?
+    
+    // TODO : add to bufPool? When did the page ever get added to bufPool?
   }
 
   void BufMgr::flushFile(File &file)
