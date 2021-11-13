@@ -192,25 +192,25 @@ namespace badgerdb
 
   void BufMgr::allocPage(File &file, PageId &pageNo, Page* &page)
   {
-    std::cout << "        BufMgr: Starting allocPage! \n";
-    Page p = file.allocatePage();
-    std::cout << "        BufMgr: file.allocatePage() \n";
-    page = &(p);    // TODO : may not need & here
-                                    // added a star here, removed an error? 
 
-    std::cout << "        BufMgr: set Page* &page to newly allocated page \n";
-    pageNo = (*page).page_number(); // TODO : check pointer syntax
-    std::cout << "        BufMgr: pageNo set to " << pageNo << "\n";
+    std::cout << "        BufMgr: Starting allocPage! \n";
     FrameId fid;
     allocBuf(fid);
     std::cout << "        BufMgr: allocBuf(fid) \n";
+
+    bufPool[fid] = file.allocatePage();
+    std::cout << "        BufMgr: file.allocatePage() \n";
+    page = &bufPool[fid];
+    pageNo = bufPool[fid].page_number();
+
     hashTable.insert(file, pageNo, fid);
     bufDescTable[clockHand].Print();
     std::cout << "        BufMgr: inserted to hash table \n";
+
     bufDescTable[fid].Set(file, pageNo);
     bufDescTable[clockHand].Print();
     std::cout << "        BufMgr: set within bufDescTable \n";
-    // TODO : do anything with bufPool ?
+    
   }
 
   void BufMgr::flushFile(File &file)
