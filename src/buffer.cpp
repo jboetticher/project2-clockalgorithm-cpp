@@ -166,7 +166,7 @@ namespace badgerdb
           throw BadBufferException(i, bufDescTable[i].dirty, bufDescTable[i].valid, bufDescTable[i].refbit);
         }
         if (bufDescTable[i].pinCnt > 0) {
-           PagePinnedException(file.filename(), bufDescTable[i].pageNo, i);
+          throw PagePinnedException(file.filename(), bufDescTable[i].pageNo, i);
         }
         if (bufDescTable[i].dirty) {
           file.writePage(bufPool[i]);
