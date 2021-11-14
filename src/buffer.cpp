@@ -71,64 +71,74 @@ namespace badgerdb
   {
     std::cout << "        BufMgr: Starting allocBuf! \n";
     // store current frame so that we can check if it repeats itself
-    FrameId curFrame = clockHand;
+    // FrameId curFrame = clockHand;
 
     // clock algorithm until it gets to the clock hand
     advanceClock();
     std::cout << "        BufMgr: Advanced the clock to " << clockHand << ".\n";
 
     bool allocated = false;
-    while (!allocated && curFrame != clockHand)
+    // buffer exceeded exception only called if every frame is pinned
+    // we are allowed to cycle through the buffer pool more than once
+    // that said, not sure if this implementation is optimal
+    std::vector<bool> pinned(numBufs, false);
+    int numPinned = 0;
+    while (!allocated && numPinned < numBufs)
     {
-      // if the refbit is 1, reset it & advance the clock
-      if (bufDescTable[clockHand].refbit)
-      {
-        bufDescTable[clockHand].refbit = false;
-        advanceClock();
-        std::cout << "        BufMgr: Refbit was 1, so it was reset and the clock was advanced to " << clockHand << ".\n";
-      }
-      // if it's being used, skip it.
-      else if (bufDescTable[clockHand].pinCnt > 0)
-      {
-        advanceClock();
-        std::cout << "        BufMgr: PinCnt > 0, clock advanced to " << clockHand << ".\n";
-      }
-      // else, frameid is set to that frame. set allocated to true.
-      else
-      {
-        frame = bufDescTable[clockHand].frameNo;
-        std::cout << "        BufMgr: FrameId set to " << frame << ".\n";
-
-        // if frame is dirty, write to disk.
-        if (bufDescTable[clockHand].dirty)
+      if (bufDescTable[clockHand].valid) {
+        // if the refbit is 1, reset it & advance the clock
+        if (bufDescTable[clockHand].refbit)
+        {
+          bufDescTable[clockHand].refbit = false;
+          advanceClock();
+          std::cout << "        BufMgr: Refbit was 1, so it was reset and the clock was advanced to " << clockHand << ".\n";
+          continue;
+        }
+        // if it's being used, skip it.
+        else if (bufDescTable[clockHand].pinCnt > 0)
+        {
+          if (!pinned[clockHand]) {
+            pinned[clockHand] = true;
+            numPinned++;
+          }
+          advanceClock();
+          std::cout << "        BufMgr: PinCnt > 0, clock advanced to " << clockHand << ".\n";
+          continue;
+        }
+        else if (bufDescTable[clockHand].dirty)
         {
           std::cout << "        BufMgr: Frame was dirty, starting to flush.\n";
 
-          // NOTE:  algorithm says to flush, not sure if calling this is right.
-          //        also not sure if I used pointers correctly.
-          flushFile(bufDescTable[clockHand].file);
+          // instructions say to flush page, not file:
+          // flushFile(bufDescTable[clockHand].file);
+          bufDescTable[clockHand].file.writePage(bufPool[clockHand]);
         }
-
-        // TODO:    if the buffer frame allocated has a valid page in it, 
-        //          remove the appropriate entry from the hash table.
-        //hashTable.remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
-
+        // replacing frame with valid page, so remove from hashtable
+        try {
+          hashTable.remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
+        } catch (HashNotFoundException e) {
+          std::cout << "TODO : EVALUATE THIS CASE";
+        }
+      } 
+      
+        frame = bufDescTable[clockHand].frameNo;
+        std::cout << "        BufMgr: FrameId set to " << frame << ".\n";
+      
         // clear + set frame + end
         // NOTE:    not sure if clearing is necessary
-        std::cout << "        BufMgr: Starting to clear frame.\n";
-        bufDescTable[clockHand].clear();
+        // std::cout << "        BufMgr: Starting to clear frame.\n";
+       // bufDescTable[clockHand].clear();
         bufDescTable[clockHand].Print();
         allocated = true;
-      }
     }
 
-    if (!allocated)
+    if (numPinned >= numBufs)
     {
       throw new BufferExceededException();
     }
   }
 
-  // jeremy
+  
   void BufMgr::readPage(File &file, const PageId pageNo, Page *&page)
   {
     // check if the page is already in the buffer pool via lookup method
@@ -146,16 +156,21 @@ namespace badgerdb
       bufDescTable[f].pinCnt += 1;
 
       // return a pointer to the frame containing the page via page parameter
-      *page = bufPool[f];
+      page = &bufPool[f];
     }
     // page is not in the buffer pool:
     catch (HashNotFoundException e)
     {
       // call allocBuf
-      allocBuf(f);
+      try {
+        allocBuf(f);
+      } catch (BufferExceededException e) {
+        std::cout << "TODO : EVALUATE THIS CASE";
+      }
+      
 
       // call the method file.readPage()
-      Page pg = file.readPage(pageNo);
+      bufPool[f] = file.readPage(pageNo);
 
       // insert page into hashtable
       hashTable.insert(file, pageNo, f);
@@ -164,7 +179,7 @@ namespace badgerdb
       bufDescTable[f].Set(file, pageNo);
 
       // return pointer to frame containing the page via page parameter
-      *page = pg;
+      page = &bufPool[f];
     }
   }
 
@@ -180,7 +195,7 @@ namespace badgerdb
       std::cerr << e.message();
       return;
     }
-    if (bufDescTable[fid].pinCnt != 0)
+    if (bufDescTable[fid].pinCnt > 0)
     {
       bufDescTable[fid].pinCnt -= 1;
       if (dirty)
@@ -199,7 +214,12 @@ namespace badgerdb
 
     std::cout << "        BufMgr: Starting allocPage! \n";
     FrameId fid;
-    allocBuf(fid);
+    try {
+      allocBuf(fid);
+    } catch (BufferExceededException e) {
+      std::cout << "TODO : EVALUATE THIS CASE";
+    }
+    
     std::cout << "        BufMgr: allocBuf(fid) \n";
 
     bufPool[fid] = file.allocatePage();

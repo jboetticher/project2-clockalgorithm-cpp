@@ -165,19 +165,20 @@ void test1(File &file1) {
   std::cout << "Test 1: allocating pages in a file. \n";
   for (i = 0; i < num; i++) {
     bufMgr->allocPage(file1, pid[i], page);
-    std::cout << "    Allocating page finished. \n";
+    // std::cout << "    Allocating page finished. \n";
     sprintf(tmpbuf, "test.1 Page %u %7.1f", pid[i], (float)pid[i]);
-    std::cout << "    sprintf finished. \n";
+    // std::cout << "    sprintf finished. \n";
     rid[i] = page->insertRecord(tmpbuf);
-    std::cout << "    Inserting record finished. \n";
+    // std::cout << "    Inserting record finished. \n";
     bufMgr->unPinPage(file1, pid[i], true);
-    std::cout << "    Page unpinning finished. \n";
+    // std::cout << "    Page unpinning finished. \n";
   }
 
   // Reading pages back...
-  std::cout << "Test 1: reading pages back. \n";
+  // std::cout << "Test 1: reading pages back. \n";
   for (i = 0; i < num; i++) {
     bufMgr->readPage(file1, pid[i], page);
+    // std::cout << "    readPage finished \n";
     sprintf(tmpbuf, "test.1 Page %u %7.1f", pid[i], (float)pid[i]);
     if (strncmp(page->getRecord(rid[i]).c_str(), tmpbuf, strlen(tmpbuf)) != 0) {
       PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
@@ -191,40 +192,48 @@ void test1(File &file1) {
 void test2(File &file1, File &file2, File &file3) {
   // Writing and reading back multiple files
   // The page number and the value should match
-
+  std::cout << "starting test 2 \n";
   for (i = 0; i < num / 3; i++) {
+    // std::cout << "    allocPage(file2..) \n";
     bufMgr->allocPage(file2, pageno2, page2);
     sprintf(tmpbuf, "test.2 Page %u %7.1f", pageno2, (float)pageno2);
+    // std::cout << "    page 2 insertRecord(..) \n";
     rid2 = page2->insertRecord(tmpbuf);
 
     long int index = random() % num;
+    // std::cout << "    page 1 index: " << index << "\n";
     pageno1 = pid[index];
+    // std::cout << "    readPage(file1..) \n";
     bufMgr->readPage(file1, pageno1, page);
     sprintf(tmpbuf, "test.1 Page %u %7.1f", pageno1, (float)pageno1);
     if (strncmp(page->getRecord(rid[index]).c_str(), tmpbuf, strlen(tmpbuf)) !=
         0) {
       PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
     }
-
+    // std::cout << "    allocPage(file3..) \n";
     bufMgr->allocPage(file3, pageno3, page3);
     sprintf(tmpbuf, "test.3 Page %u %7.1f", pageno3, (float)pageno3);
     rid3 = page3->insertRecord(tmpbuf);
 
+    // std::cout << "    readPage(file2..) \n";
     bufMgr->readPage(file2, pageno2, page2);
     sprintf(tmpbuf, "test.2 Page %u %7.1f", pageno2, (float)pageno2);
     if (strncmp(page2->getRecord(rid2).c_str(), tmpbuf, strlen(tmpbuf)) != 0) {
       PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
     }
 
+    // std::cout << "    readPage(file3..) \n";
     bufMgr->readPage(file3, pageno3, page3);
     sprintf(tmpbuf, "test.3 Page %u %7.1f", pageno3, (float)pageno3);
     if (strncmp(page3->getRecord(rid3).c_str(), tmpbuf, strlen(tmpbuf)) != 0) {
       PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
     }
 
+    // std::cout << "    unPinPage(file1..) \n";
     bufMgr->unPinPage(file1, pageno1, false);
   }
 
+  // std::cout << "    unpin twos and threes \n";
   for (i = 0; i < num / 3; i++) {
     bufMgr->unPinPage(file2, i + 1, true);
     bufMgr->unPinPage(file2, i + 1, true);
@@ -265,9 +274,12 @@ void test4(File &file4) {
 }
 
 void test5(File &file5) {
+  std::cout << "starting test 5 \n";
   for (i = 0; i < num; i++) {
+    std::cout << "    allocPage(file5..) \n";
     bufMgr->allocPage(file5, pid[i], page);
     sprintf(tmpbuf, "test.5 Page %u %7.1f", pid[i], (float)pid[i]);
+    std::cout << "    insertRecord(..) \n";
     rid[i] = page->insertRecord(tmpbuf);
   }
 
@@ -287,6 +299,7 @@ void test5(File &file5) {
 }
 
 void test6(File &file1) {
+  std::cout << "starting test 6 \n";
   // flushing file with pages still pinned. Should generate an error
   for (i = 1; i <= num; i++) {
     bufMgr->readPage(file1, i, page);
