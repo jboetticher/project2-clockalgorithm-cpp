@@ -115,6 +115,8 @@ namespace badgerdb
         }
         // replacing frame with valid page, so remove from hashtable
         // try {
+        std::cout << "        Removing " << bufDescTable[clockHand].file.filename() << ", ";
+        std::cout << bufDescTable[clockHand].pageNo << " from hash table\n";
         hashTable.remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
         // } catch (HashNotFoundException e) {
         //   std::cout << "TODO : EVALUATE THIS CASE";
@@ -161,17 +163,19 @@ namespace badgerdb
     // page is not in the buffer pool:
     catch (HashNotFoundException e)
     {
+      // might throw InvalidPageException if bad file
+      Page p = file.readPage(pageNo);
       // call allocBuf
       // try {
       allocBuf(f);
       // } catch (BufferExceededException e) {
       //   std::cout << "TODO : EVALUATE THIS CASE";
       // }
-      
+      bufPool[f] = p;
 
-      // call the method file.readPage()
-      bufPool[f] = file.readPage(pageNo);
-
+      std::cout << "        Adding " << file.filename() << ", ";
+      std::cout << pageNo << " to hash table at ";
+      std::cout << "frame " << f << "\n";
       // insert page into hashtable
       hashTable.insert(file, pageNo, f);
 
@@ -226,7 +230,9 @@ namespace badgerdb
     std::cout << "        BufMgr: file.allocatePage() \n";
     page = &bufPool[fid];
     pageNo = bufPool[fid].page_number();
-
+    std::cout << "        Adding " << bufDescTable[fid].file.filename() << ", ";
+    std::cout << bufDescTable[fid].pageNo << " to hash table at ";
+    std::cout << "frame " << fid << "\n";
     hashTable.insert(file, pageNo, fid);
     bufDescTable[clockHand].Print();
     std::cout << "        BufMgr: inserted to hash table \n";
