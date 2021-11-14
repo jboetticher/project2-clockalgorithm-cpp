@@ -32,16 +32,16 @@ void Page::initialize() {
 }
 
 RecordId Page::insertRecord(const std::string &record_data) {
-  std::cout << "        Page: insertRecord(string &record_data) starting. \n";
+  // std::cout << "        Page: insertRecord(string &record_data) starting. \n";
   if (!hasSpaceForRecord(record_data)) {
     throw InsufficientSpaceException(page_number(), record_data.length(),
                                      getFreeSpace());
   }
-  std::cout << "        Page: Has enough space for the record. \n";
+  // std::cout << "        Page: Has enough space for the record. \n";
   const SlotId slot_number = getAvailableSlot();
-  std::cout << "        Page: Available slot was " << slot_number << ". \n";
+  // std::cout << "        Page: Available slot was " << slot_number << ". \n";
   insertRecordInSlot(slot_number, record_data);
-  std::cout << "        Page: Inserted record in the slot. \n";
+  // std::cout << "        Page: Inserted record in the slot. \n";
   return {page_number(), slot_number};
 }
 
@@ -147,13 +147,13 @@ const PageSlot *Page::getSlot(const SlotId slot_number) const {
 
 SlotId Page::getAvailableSlot() {
   SlotId slot_number = INVALID_SLOT;
-  std::cout << "        Page: getAvailableSlot() started. \n";
-  std::cout << "        Page: header_.num_free_slots: " << header_.num_free_slots << ".\n";
-  std::cout << "        Page: header_.num_slots: " << header_.num_slots << ".\n";
+  // std::cout << "        Page: getAvailableSlot() started. \n";
+  // std::cout << "        Page: header_.num_free_slots: " << header_.num_free_slots << ".\n";
+  // std::cout << "        Page: header_.num_slots: " << header_.num_slots << ".\n";
   if (header_.num_free_slots > 0) {
     // Have an allocated but unused slot that we can reuse.
     for (SlotId i = 1; i <= header_.num_slots; ++i) {
-      std::cout << "        Page: getSlot() started. \n";
+      // std::cout << "        Page: getSlot() started. \n";
       const PageSlot *slot = getSlot(i);
       if (!slot->used) {
         // We don't decrement the number of free slots until someone
@@ -164,16 +164,16 @@ SlotId Page::getAvailableSlot() {
     }
   } else {
     // Have to allocate a new slot.
-    std::cout << "        Page: starting to allocate a new slot. \n";
+    // std::cout << "        Page: starting to allocate a new slot. \n";
     slot_number = header_.num_slots + 1;
     ++header_.num_slots;
     ++header_.num_free_slots;
-    std::cout << "        Page: starting to free space. \n";
+    // std::cout << "        Page: starting to free space. \n";
     header_.free_space_lower_bound = sizeof(PageSlot) * header_.num_slots;
-    std::cout << "        Page: free space lower bound allocated to: " << header_.free_space_lower_bound << ". \n";
+    // std::cout << "        Page: free space lower bound allocated to: " << header_.free_space_lower_bound << ". \n";
   }
   assert(slot_number != INVALID_SLOT);
-  std::cout << "        Page: slot number is now: " << slot_number << "\n";
+  // std::cout << "        Page: slot number is now: " << slot_number << "\n";
   return slot_number;
 }
 

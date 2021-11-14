@@ -114,11 +114,11 @@ namespace badgerdb
           bufDescTable[clockHand].file.writePage(bufPool[clockHand]);
         }
         // replacing frame with valid page, so remove from hashtable
-        try {
-          hashTable.remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
-        } catch (HashNotFoundException e) {
-          std::cout << "TODO : EVALUATE THIS CASE";
-        }
+        // try {
+        hashTable.remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
+        // } catch (HashNotFoundException e) {
+        //   std::cout << "TODO : EVALUATE THIS CASE";
+        // }
       } 
       
         frame = bufDescTable[clockHand].frameNo;
@@ -132,7 +132,7 @@ namespace badgerdb
         allocated = true;
     }
 
-    if (numPinned >= numBufs)
+    if (!allocated && numPinned >= numBufs)
     {
       throw new BufferExceededException();
     }
@@ -162,11 +162,11 @@ namespace badgerdb
     catch (HashNotFoundException e)
     {
       // call allocBuf
-      try {
-        allocBuf(f);
-      } catch (BufferExceededException e) {
-        std::cout << "TODO : EVALUATE THIS CASE";
-      }
+      // try {
+      allocBuf(f);
+      // } catch (BufferExceededException e) {
+      //   std::cout << "TODO : EVALUATE THIS CASE";
+      // }
       
 
       // call the method file.readPage()
@@ -214,11 +214,11 @@ namespace badgerdb
 
     std::cout << "        BufMgr: Starting allocPage! \n";
     FrameId fid;
-    try {
-      allocBuf(fid);
-    } catch (BufferExceededException e) {
-      std::cout << "TODO : EVALUATE THIS CASE";
-    }
+    // try {
+    allocBuf(fid);
+    // } catch (const BufferExceededException &e) {
+    //   std::cout << "TODO : EVALUATE THIS CASE";
+    // }
     
     std::cout << "        BufMgr: allocBuf(fid) \n";
 
